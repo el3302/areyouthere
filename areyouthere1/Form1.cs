@@ -38,24 +38,55 @@ namespace areyouthere1
         {
             //declerations
             string url;
+            string content;
+            string stCode;
+            string stResponse;
 
             //set the string 'url' to the value of the urltetinput value
             url = urltestinput.Text;
 
-            //if the string 'url' is not null then run this
-            if (url !=null)
+            //Check the lenght of the string 'url'. If this returns <=0 then the string is empty, This code is then run.
+            if (url.Length <=0)
             {
-                responsebox.Text = url; //url is displayed in responsebox
-                statustextbox.Text = "P00001";
-                Console.WriteLine("P00001" + " " + url); //url is displayed in console
-
-            }
-            //if the string 'url' is null then run thi
-            else
-            {
+                urltestinput.Text = "Please enter a website to check";
                 responsebox.Text = "Nothing Selected";
                 statustextbox.Text = "E00001";
-                Console.WriteLine("E00001" + " " + "Nothing Selected");
+                Console.WriteLine("$output > " + "E00001" + " --> " + urltestinput.Text +  " --> " + responsebox.Text);
+            }
+            //if the string 'url' is not null then run this
+            else
+            {
+                var request = (HttpWebRequest)WebRequest.Create(url);
+                request.Method = "GET";
+
+                HttpStatusCode statusCode;
+                using (var response = request.GetResponse())
+                using (var stream = response.GetResponseStream())
+                {
+                    var contentType = response.ContentType;
+                    Encoding encoding = null;
+
+                    if (contentType != null)
+                    {
+                        var match = Regex.Match(contentType, @"(?<=charset\=).*");
+                        if (match.Success)
+                            encoding = Encoding.GetEncoding(match.ToString());
+                    }
+
+                    encoding = encoding ?? Encoding.UTF8;
+
+                    statusCode = ((HttpWebResponse)response).StatusCode;
+
+                    using (var reader = new StreamReader(stream, encoding))
+                        content = reader.ReadToEnd();
+
+                    stResponse = content;
+                    stCode = statusCode.ToString();
+
+                    statustextbox.Text = stCode;
+                    responsebox.Text = stResponse;
+                }
+
             }
         }
     }
